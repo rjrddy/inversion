@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card } from "@/components/ui/card"
+import { Card as UICard } from "@/components/ui/card"
 
 type App = { id: string; company: string; role: string; status: string; notes?: string | null }
 
@@ -15,8 +15,17 @@ export default function ApplicationsPage() {
 
   async function load() {
     const res = await fetch("/api/applications")
-    const data = await res.json()
-    setApps(data)
+    if (!res.ok) {
+      if (res.status === 401 && typeof window !== 'undefined') {
+        window.location.href = "/signin"
+        return
+      }
+      setApps([])
+      return
+    }
+    const text = await res.text()
+    const data = text ? JSON.parse(text) : []
+    setApps(Array.isArray(data) ? data : [])
   }
   useEffect(() => { load() }, [])
 
@@ -43,19 +52,19 @@ export default function ApplicationsPage() {
   function Column({ status }: { status: string }) {
     const columnApps = apps.filter(a => a.status === status)
     return (
-      <Card className="p-3 bg-card min-h-64">
+      <UICard className="p-3 bg-card min-h-64">
         <div className="text-sm font-medium mb-2">{status}</div>
         <div className="space-y-2">
           {columnApps.map(a => (
-            <Card key={a.id} app={a} onMove={move} />
+            <ApplicationCard key={a.id} app={a} onMove={move} />
           ))}
           {columnApps.length === 0 && <div className="text-xs text-muted-foreground">No applications</div>}
         </div>
-      </Card>
+      </UICard>
     )
   }
 
-  function Card({ app, onMove }: { app: App; onMove: (id: string, status: string) => void }) {
+  function ApplicationCard({ app, onMove }: { app: App; onMove: (id: string, status: string) => void }) {
     const [tab, setTab] = useState<'move' | 'notes'>('move')
     const [note, setNote] = useState("")
     const [versions, setVersions] = useState<any[]>([])
@@ -80,7 +89,7 @@ export default function ApplicationsPage() {
     useEffect(() => { loadVersions() }, [])
 
     return (
-      <Card className="bg-background p-2 space-y-2">
+      <UICard className="bg-background p-2 space-y-2">
         <div className="text-sm font-medium">{app.company} — {app.role}</div>
         <div className="flex items-center gap-2 text-xs">
           <button className={`px-2 py-1 rounded ${tab==='move'?'bg-muted':''}`} onClick={() => setTab('move')}>Move</button>
@@ -116,7 +125,7 @@ export default function ApplicationsPage() {
             </div>
           </div>
         )}
-      </Card>
+      </UICard>
     )
   }
 

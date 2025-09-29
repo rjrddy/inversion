@@ -14,9 +14,18 @@ export default function ResumesPage() {
 
   async function load() {
     const res = await fetch("/api/resumes")
-    const data = await res.json()
-    setResumes(data)
-    if (!active && data.length > 0) setActive(data[0])
+    if (!res.ok) {
+      if (res.status === 401 && typeof window !== 'undefined') {
+        window.location.href = "/signin"
+        return
+      }
+      setResumes([])
+      return
+    }
+    const text = await res.text()
+    const data = text ? JSON.parse(text) : []
+    setResumes(Array.isArray(data) ? data : [])
+    if (!active && Array.isArray(data) && data.length > 0) setActive(data[0])
   }
 
   useEffect(() => {

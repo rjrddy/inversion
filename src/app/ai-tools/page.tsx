@@ -22,6 +22,7 @@ export default function AIToolsPage() {
     extensions: [StarterKit, Placeholder.configure({ placeholder: "Generated cover letter will appear here…" })],
     content: "",
     editorProps: { attributes: { class: "prose prose-sm max-w-none focus:outline-none min-h-64" } },
+    immediatelyRender: false,
   })
 
   useEffect(() => {

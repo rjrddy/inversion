@@ -1,4 +1,5 @@
-export { auth as middleware } from "@/lib/auth"
+// Use NextAuth's built-in middleware to avoid alias/path resolution issues
+export { auth as middleware } from "next-auth"
 
 export const config = {
   matcher: [
