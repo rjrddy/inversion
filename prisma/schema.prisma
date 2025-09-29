@@ -1,0 +1,160 @@
+// Datasource
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Generator
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String?  @unique
+  image     String?
+  createdAt DateTime @default(now())
+  accounts  Account[]
+  sessions  Session[]
+  resumes   Resume[]
+  applications JobApplication[]
+  portfolioDrafts PortfolioDraft[]
+  interviewPrepEntries InterviewPrepEntry[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  refresh_token_expires_in Int?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+
+model Resume {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  createdAt DateTime @default(now())
+
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  versions ResumeVersion[]
+}
+
+model ResumeVersion {
+  id         String   @id @default(cuid())
+  resumeId   String
+  content    Json
+  branchName String
+  createdAt  DateTime @default(now())
+
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+}
+
+model JobApplication {
+  id        String   @id @default(cuid())
+  userId    String
+  company   String
+  role      String
+  status    String
+  appliedAt DateTime
+  notes     String?
+  resumeVersionId String?
+
+  user  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notesEntries CompanyNote[]
+  coverLetters CoverLetter[]
+  noteVersions JobApplicationNoteVersion[]
+  interviewPrepEntries InterviewPrepEntry[]
+}
+
+model CompanyNote {
+  id               String   @id @default(cuid())
+  jobApplicationId String
+  content          String
+  createdAt        DateTime @default(now())
+
+  jobApplication JobApplication @relation(fields: [jobApplicationId], references: [id], onDelete: Cascade)
+}
+
+
+model CoverLetter {
+  id               String   @id @default(cuid())
+  jobApplicationId String
+  title            String
+  content          Json
+  createdAt        DateTime @default(now())
+
+  jobApplication JobApplication @relation(fields: [jobApplicationId], references: [id], onDelete: Cascade)
+}
+
+
+model PortfolioDraft {
+  id        String   @id @default(cuid())
+  userId    String
+  template  String
+  aboutMe   String?
+  projects  Json?
+  experience Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+
+model JobApplicationNoteVersion {
+  id               String   @id @default(cuid())
+  jobApplicationId String
+  content          Json
+  branchName       String   @default("main")
+  createdAt        DateTime @default(now())
+
+  jobApplication JobApplication @relation(fields: [jobApplicationId], references: [id], onDelete: Cascade)
+}
+
+
+model InterviewPrepEntry {
+  id               String   @id @default(cuid())
+  userId           String
+  jobApplicationId String?
+  type             String   // behavioral | technical | pitch
+  input            Json?
+  output           Json?
+  createdAt        DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobApplication JobApplication? @relation(fields: [jobApplicationId], references: [id])
+}
+
+
