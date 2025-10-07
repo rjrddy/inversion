@@ -30,7 +30,6 @@ npm run db:push
 4) Start dev server:
 ```bash
 npm run dev
-test
 ```
 
 App runs at http://localhost:3000. All main routes are protected; use `/signin` to login via GitHub, Google, or LinkedIn.
