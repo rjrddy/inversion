@@ -11,11 +11,29 @@ export function Analytics() {
   const [companiesContacted, setCompanies] = useState<Array<{ name: string; value: number }>>([])
 
   useEffect(() => {
-    fetch("/api/analytics").then(r => r.json()).then((d) => {
-      setAot(d.applicationsOverTime || [])
-      setVvs(d.versionsVsSuccess || [])
-      setCompanies(d.companiesContacted || [])
-    }).catch(() => {})
+    fetch("/api/analytics")
+      .then(async (r) => {
+        if (!r.ok) {
+          throw new Error(`HTTP error! status: ${r.status}`)
+        }
+        const text = await r.text()
+        if (!text) {
+          throw new Error('Empty response')
+        }
+        return JSON.parse(text)
+      })
+      .then((d) => {
+        setAot(d.applicationsOverTime || [])
+        setVvs(d.versionsVsSuccess || [])
+        setCompanies(d.companiesContacted || [])
+      })
+      .catch((error) => {
+        console.error('Error fetching analytics:', error)
+        // Set default empty arrays on error
+        setAot([])
+        setVvs([])
+        setCompanies([])
+      })
   }, [])
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

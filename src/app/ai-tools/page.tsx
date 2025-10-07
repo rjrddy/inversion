@@ -26,7 +26,25 @@ export default function AIToolsPage() {
   })
 
   useEffect(() => {
-    fetch("/api/applications").then(r => r.json()).then(setApps).catch(() => {})
+    fetch("/api/applications")
+      .then(async (r) => {
+        if (!r.ok) {
+          const errorText = await r.text()
+          console.error(`API Error ${r.status}:`, errorText)
+          throw new Error(`HTTP error! status: ${r.status}`)
+        }
+        const text = await r.text()
+        if (!text) {
+          throw new Error('Empty response')
+        }
+        return JSON.parse(text)
+      })
+      .then(setApps)
+      .catch((error) => {
+        console.error('Error fetching applications:', error)
+        setApps([])
+        // You could add a toast notification here to inform the user
+      })
   }, [])
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {

@@ -21,13 +21,35 @@ export default function PortfolioPage() {
   const [experience, setExperience] = useState<Array<{ company: string; role: string; summary: string }>>([])
 
   useEffect(() => {
-    fetch("/api/portfolio").then(r => r.json()).then((d: Draft) => {
-      setDraft(d)
-      setTemplate(d.template || "clean")
-      setAboutMe(d.aboutMe || "")
-      setProjects(Array.isArray(d.projects) ? d.projects : [])
-      setExperience(Array.isArray(d.experience) ? d.experience : [])
-    })
+    fetch("/api/portfolio")
+      .then(async (r) => {
+        if (!r.ok) {
+          const errorText = await r.text()
+          console.error(`Portfolio API Error ${r.status}:`, errorText)
+          throw new Error(`HTTP error! status: ${r.status}`)
+        }
+        const text = await r.text()
+        if (!text) {
+          throw new Error('Empty response')
+        }
+        return JSON.parse(text)
+      })
+      .then((d: Draft) => {
+        setDraft(d)
+        setTemplate(d.template || "clean")
+        setAboutMe(d.aboutMe || "")
+        setProjects(Array.isArray(d.projects) ? d.projects : [])
+        setExperience(Array.isArray(d.experience) ? d.experience : [])
+      })
+      .catch((error) => {
+        console.error('Error fetching portfolio:', error)
+        // Set default values on error
+        setTemplate("clean")
+        setAboutMe("")
+        setProjects([])
+        setExperience([])
+        // You could add a toast notification here to inform the user
+      })
   }, [])
 
   function addProject() {
@@ -38,13 +60,28 @@ export default function PortfolioPage() {
   }
 
   async function save() {
-    const res = await fetch("/api/portfolio", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ template, aboutMe, projects, experience }),
-    })
-    const data = await res.json()
-    setDraft(data)
+    try {
+      const res = await fetch("/api/portfolio", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ template, aboutMe, projects, experience }),
+      })
+      
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`)
+      }
+      
+      const text = await res.text()
+      if (!text) {
+        throw new Error('Empty response')
+      }
+      
+      const data = JSON.parse(text)
+      setDraft(data)
+    } catch (error) {
+      console.error('Error saving portfolio:', error)
+      // You might want to show a toast notification here
+    }
   }
 
   function TemplatePreview() {

@@ -13,19 +13,32 @@ export default function ResumesPage() {
   const [active, setActive] = useState<Resume | null>(null)
 
   async function load() {
-    const res = await fetch("/api/resumes")
-    if (!res.ok) {
-      if (res.status === 401 && typeof window !== 'undefined') {
-        window.location.href = "/signin"
+    try {
+      const res = await fetch("/api/resumes")
+      if (!res.ok) {
+        if (res.status === 401 && typeof window !== 'undefined') {
+          window.location.href = "/signin"
+          return
+        }
+        const errorText = await res.text()
+        console.error(`Resume loading error ${res.status}:`, errorText)
+        setResumes([])
         return
       }
+      
+      const text = await res.text()
+      if (!text) {
+        setResumes([])
+        return
+      }
+      
+      const data = JSON.parse(text)
+      setResumes(Array.isArray(data) ? data : [])
+      if (!active && Array.isArray(data) && data.length > 0) setActive(data[0])
+    } catch (error) {
+      console.error('Error loading resumes:', error)
       setResumes([])
-      return
     }
-    const text = await res.text()
-    const data = text ? JSON.parse(text) : []
-    setResumes(Array.isArray(data) ? data : [])
-    if (!active && Array.isArray(data) && data.length > 0) setActive(data[0])
   }
 
   useEffect(() => {
@@ -34,14 +47,31 @@ export default function ResumesPage() {
   }, [])
 
   async function createResume() {
-    const res = await fetch("/api/resumes", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: `Resume ${resumes.length + 1}` }),
-    })
-    const created = await res.json()
-    await load()
-    setActive(created)
+    try {
+      const res = await fetch("/api/resumes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: `Resume ${resumes.length + 1}` }),
+      })
+      
+      if (!res.ok) {
+        const errorText = await res.text()
+        console.error(`Resume creation error ${res.status}:`, errorText)
+        throw new Error(`HTTP error! status: ${res.status}`)
+      }
+      
+      const text = await res.text()
+      if (!text) {
+        throw new Error('Empty response')
+      }
+      
+      const created = JSON.parse(text)
+      await load()
+      setActive(created)
+    } catch (error) {
+      console.error('Error creating resume:', error)
+      // You could add a toast notification here to inform the user
+    }
   }
 
   return (
