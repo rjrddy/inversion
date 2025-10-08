@@ -12,7 +12,14 @@ export async function GET() {
       where: { userId: session.user.id },
       orderBy: { createdAt: "desc" },
     })
-    return NextResponse.json(resumes)
+    
+    // Convert BigInt values to strings for JSON serialization
+    const serializedResumes = resumes.map(resume => ({
+      ...resume,
+      createdAt: resume.createdAt.toISOString()
+    }))
+    
+    return NextResponse.json(serializedResumes)
   } catch (error) {
     console.error('Error fetching resumes:', error)
     return NextResponse.json({ error: "Database connection failed" }, { status: 500 })
@@ -31,7 +38,14 @@ export async function POST(req: Request) {
     const resume = await prisma.resume.create({
       data: { title, userId: session.user.id },
     })
-    return NextResponse.json(resume, { status: 201 })
+    
+    // Convert BigInt values to strings for JSON serialization
+    const serializedResume = {
+      ...resume,
+      createdAt: resume.createdAt.toISOString()
+    }
+    
+    return NextResponse.json(serializedResume, { status: 201 })
   } catch (error) {
     console.error('Error creating resume:', error)
     return NextResponse.json({ error: "Failed to create resume" }, { status: 500 })
