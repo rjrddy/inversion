@@ -1,5 +1,4 @@
-// Use NextAuth's built-in middleware to avoid alias/path resolution issues
-export { auth as middleware } from "next-auth"
+export { default as middleware } from "next-auth/middleware"
 
 export const config = {
   matcher: [

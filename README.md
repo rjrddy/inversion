@@ -37,6 +37,13 @@ App runs at http://localhost:3000. All main routes are protected; use `/signin` 
 ### Observability
 - Sentry enabled; set `NEXT_PUBLIC_SENTRY_DSN` (and/or `SENTRY_DSN`) to capture errors and traces.
 
+### PDF Conversion (AWS Lambda)
+- UI: `src/app/ai-tools/pdf/page.tsx` — raw text box (Markdown or LaTeX) → downloads PDF
+- API: `POST /api/pdf` — proxies to AWS Lambda and streams back the PDF
+- Configure environment variables:
+  - `LAMBDA_PDF_URL` — your AWS Lambda HTTPS endpoint URL
+  - `LAMBDA_PDF_API_KEY` — optional API key header `x-api-key`
+
 ### Deployment
 - Frontend: Vercel (Next.js App Router)
 - Database: Supabase (Postgres) or AWS RDS Postgres
